@@ -98,8 +98,9 @@ def home(request):
     # no. of rooms available
     room_count = rooms.count()
 
-    # recent activities
-    room_messages = Message.objects.all()
+    # recent activities, messages being filtered to that room so that 
+    # only messages from that room are displayed
+    room_messages = Message.objects.filter(Q(room__topic__name__icontains=q))
 
     context = {'rooms': rooms, 'topics': topics, 
                'room_count': room_count, 'room_messages': room_messages}
