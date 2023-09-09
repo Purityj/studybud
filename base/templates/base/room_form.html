@@ -1,0 +1,16 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<!-- this is a template form for creating and deleting a room -->
+
+<div>
+    <form action="" method="POST">
+        {% csrf_token %}    <!-- prevents user from messing with the form  -->
+        {{form.as_p}}
+
+        <input type="submit" value="Submit" />
+    </form>
+</div>
+
+
+{% endblock content %}
