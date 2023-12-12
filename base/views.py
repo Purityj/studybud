@@ -106,6 +106,7 @@ def home(request):
                'room_count': room_count, 'room_messages': room_messages}
     return render(request, 'base/home.html', context)
 
+@login_required(login_url='login')
 def room(request, pk):
     room = Room.objects.get(id=pk)
     room_messages = room.message_set.all()  #give us all the messages that are related to this room
@@ -113,6 +114,7 @@ def room(request, pk):
 
     # processing the room_message form
     if request.method == 'POST':
+        # user_id = request.user.id
         # create() would create the actual message
         message = Message.objects.create(
             user = request.user,
@@ -120,11 +122,27 @@ def room(request, pk):
             body = request.POST.get('body')  #body is from roon.html template
         )
         #this would work without this line, but we're putting it to ensure that the page reloads correctly and that we're back on the ooom page
-        return redirect('room', pk=room.id)  
+        return redirect('room', pk=room.id) 
+    
     context = {'room': room, 'room_messages': room_messages, 
                'participants': participants}
-    room.participants.add(request.user) #add user as participant automatically after posting
+      # Add the user as a participant using their ID
+    room.participants.add(request.user)  #add user as participant automatically after posting
     return render(request, 'base/room.html', context)
+
+# user profile view
+def userProfile(request, pk):
+    user = User.objects.get(id=pk)
+    # get all users' rooms
+    rooms = user.room_set.all()
+    # render all messages of the user
+    room_messages = user.message_set.all()
+    # get all the topics - we need this because we need to access it inside the topic component
+    topics = Topic.objects.all()
+    
+    context = {'user': user, 'rooms': rooms, 
+               'room_messages': room_messages, 'topics': topics}
+    return render(request, 'base/profile.html', context )
 
 # a view for the form
 @login_required(login_url='login')
@@ -134,7 +152,9 @@ def createRoom(request):
     if request.method == 'POST':
         form = RoomForm(request.POST) #pass all the form POST data to a var called form
         if form.is_valid():     #checks if form data is valid 
-            form.save()       #save the model data in the db
+            room = form.save(commit=False)       #save the model data in the db and give us an instance of this room
+            room.host = request.user #a host will be added based on whoever is logged in
+            room.save()
             return redirect('home') # redirect user to homepage. N/B url path to home is called home in url.py
 
     context = {'form': form}
